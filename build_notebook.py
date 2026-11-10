@@ -11,15 +11,6 @@ def md(text):
 def code(text):
     cells.append(nbf.v4.new_code_cell(text))
 
-md("""# STAT7008A Programming for Data Science — Assignment 3
-
-**Machine Learning · Deep Learning · Web Scraping · Computer Vision**
-
-This notebook implements all 7 questions of Assignment 3.
-""")
-
-md("""## Setup & Imports""")
-
 code("""import warnings
 warnings.filterwarnings('ignore')
 
@@ -80,12 +71,8 @@ print(f'NumPy {np.__version__}, Pandas {pd.__version__}, Torch {torch.__version_
 # ============================================================
 # Q1
 # ============================================================
-md("""---
-# 1. K-Means Clustering (Fashion MNIST)
-
-## 1(a) Exploratory Data Analysis
-
-Load Fashion MNIST, display data volume, sample images, and class distribution.
+md("""# 1.
+## 1(a)
 """)
 
 code("""# Fashion MNIST class names (OpenML / torchvision order)
@@ -133,6 +120,9 @@ plt.savefig('figures/q1a_samples.png', bbox_inches='tight')
 plt.show()
 """)
 
+md("""Fashion MNIST is balanced — 6,000 images per class in training and 1,000 per class in test.
+""")
+
 code("""# Sample distribution of different classes
 train_counts = pd.Series(y_train_full).value_counts().sort_index()
 test_counts = pd.Series(y_test).value_counts().sort_index()
@@ -164,14 +154,9 @@ axes[1].set_xlabel('Class')
 plt.tight_layout()
 plt.savefig('figures/q1a_class_distribution.png', bbox_inches='tight')
 plt.show()
-
-print('\\nObservation: Fashion MNIST is balanced — 6,000 images per class in training '
-      'and 1,000 per class in test.')
 """)
 
-md("""## 1(b) MiniBatch K-Means + t-SNE Visualization
-
-Assume labels are unknown. Cluster the training split with `MiniBatchKMeans` and visualize with t-SNE.
+md("""## 1(b)
 """)
 
 code("""# Normalize for clustering (0-1 scale)
@@ -231,9 +216,7 @@ plt.savefig('figures/q1b_tsne_clusters.png', bbox_inches='tight')
 plt.show()
 """)
 
-md("""## 1(c) Best K via Elbow Method & Cross-Validation
-
-Compare the selected K with the true number of categories (10).
+md("""## 1(c)
 """)
 
 code("""# --- Elbow Method ---
@@ -252,6 +235,9 @@ for k in K_RANGE:
     sil = silhouette_score(X_train_scaled[sil_idx], labels_k[sil_idx], sample_size=None)
     silhouette_scores.append(sil)
     print(f'  K={k:2d} | Inertia={mbk.inertia_:,.0f} | Silhouette={sil:.4f}')
+""")
+
+md("""Inertia decreases with K; a bend often appears near K=4–6, while the silhouette score typically peaks at a smaller K than the true number of categories.
 """)
 
 code("""# Elbow plot
@@ -278,9 +264,6 @@ axes[1].set_xticks(list(K_RANGE))
 plt.tight_layout()
 plt.savefig('figures/q1c_elbow_silhouette.png', bbox_inches='tight')
 plt.show()
-
-print(f'Elbow observation: inertia decreases with K; a bend often appears near K=4–6, '
-      f'while silhouette peaks at K={best_sil_k}.')
 """)
 
 code("""# --- Cross-Validation Method (K-Fold silhouette stability) ---
@@ -310,6 +293,9 @@ for k in K_RANGE:
 
 cv_means = [np.mean(cv_silhouette[k]) for k in K_RANGE]
 best_cv_k = list(K_RANGE)[int(np.argmax(cv_means))]
+""")
+
+md("""Unsupervised criteria often prefer fewer clusters than the true label count because some Fashion MNIST classes (e.g. Shirt vs T-shirt/top, Sneaker vs Ankle boot) are visually similar and merge under pixel-space Euclidean distance. We adopt K equal to the true number of categories for centroid analysis to align with known labels, while noting that CV/silhouette often favour a smaller K.
 """)
 
 code("""fig, ax = plt.subplots(figsize=(10, 5))
@@ -342,17 +328,14 @@ print(f'Elbow Method (approx. knee)     : K = {elbow_k}')
 print(f'Silhouette (full subsample)     : K = {best_sil_k}')
 print(f'Cross-Validation Silhouette     : K = {best_cv_k}')
 print(f'True number of categories       : K = {K_TRUE}')
-print()
-print('Discussion: Unsupervised criteria often prefer fewer clusters than the true label '
-      'count because some Fashion MNIST classes (e.g. Shirt vs T-shirt/top, Sneaker vs '
-      'Ankle boot) are visually similar and merge under pixel-space Euclidean distance. '
-      f'We adopt K={K_TRUE} for centroid analysis to align with known categories, while '
-      f'noting CV/silhouette favour K={best_cv_k}.')
 
 BEST_K = K_TRUE  # use true categories for interpretable centroid visualization
 """)
 
-md("""## 1(d) Cluster Centroids Visualization & Reasonability
+md("""## 1(d)
+""")
+
+md("""Centroids resemble recognizable garment silhouettes (trousers, bags, footwear, coats). Confusion between Shirt/T-shirt/Pullover/Coat is expected because these classes share similar outlines in 28×28 grayscale. Footwear clusters (sandal, sneaker, ankle boot) also partially overlap. Overall, K-Means recovers coarse visual structure even without labels.
 """)
 
 code("""# Fit final MiniBatchKMeans with BEST_K
@@ -382,22 +365,13 @@ for c in range(BEST_K):
     majority = Counter(y_train_full[mask]).most_common(3)
     maj_str = ', '.join([f'{FASHION_LABELS[lab]}({cnt})' for lab, cnt in majority])
     print(f'  Cluster {c}: n={mask.sum():5d} | Top labels: {maj_str}')
-
-print()
-print('Reasonability: Centroids resemble recognizable garment silhouettes (trousers, bags, '
-      'footwear, coats). Confusion between Shirt/T-shirt/Pullover/Coat is expected because '
-      'these classes share similar outlines in 28×28 grayscale. Footwear clusters (sandal, '
-      'sneaker, ankle boot) also partially overlap. Overall, K-Means recovers coarse visual '
-      'structure even without labels.')
 """)
 
 # ============================================================
 # Q2
 # ============================================================
-md("""---
-# 2. PCA
-
-## 2(a) Load Fashion MNIST & MinMaxScaler Normalization
+md("""# 2.
+## 2(a)
 """)
 
 code("""# Reuse loaded data; apply MinMaxScaler to obtain normalized covariates X
@@ -412,7 +386,7 @@ print(f'  Max   : {X_train_norm.max():.4f}')
 print(f'  Mean  : {X_train_norm.mean():.4f}')
 """)
 
-md("""## 2(b) Fit PCA (n_components=2) on the Training Set
+md("""## 2(b)
 """)
 
 code("""pca_2d = PCA(n_components=2, random_state=RANDOM_STATE)
@@ -425,7 +399,14 @@ print(f'  Cumulative explained var : {pca_2d.explained_variance_ratio_.sum():.4f
 print(f'  Singular values          : {pca_2d.singular_values_}')
 """)
 
-md("""## 2(c) Visualize Clustering Results with PCA & Compare to t-SNE
+md("""## 2(c)
+""")
+
+md("""**Comparison**
+
+- PCA is a linear projection maximizing variance; the first two PCs explain only a modest fraction of total variance, so classes heavily overlap.
+- t-SNE is nonlinear and preserves local neighborhoods, producing clearer visual clusters — better for qualitative inspection, but not a global linear embedding.
+- K-Means structure is more separable under t-SNE than under 2D PCA.
 """)
 
 code("""# PCA projection of the same t-SNE subsample, colored by K-Means clusters and true labels
@@ -465,22 +446,13 @@ plt.suptitle('PCA vs t-SNE Visualization of Clustering Results', fontsize=14, fo
 plt.tight_layout()
 plt.savefig('figures/q2c_pca_vs_tsne.png', bbox_inches='tight')
 plt.show()
-
-print('Comparison:')
-print('• PCA is a linear projection maximizing variance; the first two PCs explain only '
-      f'~{pca_2d.explained_variance_ratio_.sum()*100:.1f}% of variance, so classes heavily overlap.')
-print('• t-SNE is nonlinear and preserves local neighborhoods, producing clearer visual '
-      'clusters — better for qualitative inspection, but not a global linear embedding.')
-print('• K-Means structure is more separable under t-SNE than under 2D PCA.')
 """)
 
 # ============================================================
 # Q3
 # ============================================================
-md("""---
-# 3. KNN & Naïve Bayesian Classification
-
-## 3(a) Split Training Set into Train and Validation
+md("""# 3.
+## 3(a)
 """)
 
 code("""X_tr, X_val, y_tr, y_val = train_test_split(
@@ -493,7 +465,7 @@ print(f'Validation split : {X_val.shape[0]:,} samples')
 print(f'Test split       : {X_test_norm.shape[0]:,} samples')
 """)
 
-md("""## 3(b) MultinomialNB — Tune α, Validation Curve, Test Accuracy
+md("""## 3(b)
 """)
 
 code("""alphas = [1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0]
@@ -531,7 +503,7 @@ plt.savefig('figures/q3b_nb_alpha.png', bbox_inches='tight')
 plt.show()
 """)
 
-md("""## 3(c) PCA Embedding + KNN (Tune n_neighbors)
+md("""## 3(c)
 """)
 
 code("""# Apply PCA model from Q.2 to train/val/test for 2D embedding
@@ -578,7 +550,7 @@ plt.savefig('figures/q3c_knn_k.png', bbox_inches='tight')
 plt.show()
 """)
 
-md("""## 3(d) Plot Test Set: Ground Truth, KNN Predictions, NB Predictions
+md("""## 3(d)
 """)
 
 code("""# NB predictions were on original features; for fair 2D plot we still color PCA points
@@ -611,7 +583,7 @@ plt.show()
 print(f'Test Accuracy — KNN: {knn_test_acc:.4f} | NB: {nb_test_acc:.4f}')
 """)
 
-md("""## 3(e) Confusion Matrices for KNN and NB
+md("""## 3(e)
 """)
 
 code("""def plot_stylish_confusion(y_true, y_pred, title, filename):
@@ -644,10 +616,8 @@ print('\\nNB Confusion Matrix:\\n', cm_nb)
 # ============================================================
 # Q4
 # ============================================================
-md("""---
-# 4. CNN with PyTorch
-
-## 4(a) Custom Dataset — Train / Validation / Test Splits
+md("""# 4.
+## 4(a)
 """)
 
 code("""class FashionMNISTDataset(Dataset):
@@ -719,7 +689,7 @@ sample_x, sample_y = train_ds[0]
 print(f'Sample tensor shape: {sample_x.shape}, label: {sample_y} ({FASHION_LABELS[sample_y]})')
 """)
 
-md("""## 4(b) Basic 3-Layer CNN
+md("""## 4(b)
 """)
 
 code("""class BasicCNN(nn.Module):
@@ -756,7 +726,7 @@ print(baseline_model)
 print('\\nParameter count:', sum(p.numel() for p in baseline_model.parameters() if p.requires_grad))
 """)
 
-md("""## 4(c) Training Loop with Cross-Entropy Loss
+md("""## 4(c)
 """)
 
 code("""def run_epoch(model, loader, criterion, optimizer=None):
@@ -838,7 +808,7 @@ plt.savefig('figures/q4c_training_curves.png', bbox_inches='tight')
 plt.show()
 """)
 
-md("""## 4(d) Best Model → Test Metrics & Confusion Matrix
+md("""## 4(d)
 """)
 
 code("""def evaluate_detailed(model, loader):
@@ -879,9 +849,11 @@ plot_stylish_confusion(
 )
 """)
 
-md("""## 4(e) Improve the Baseline Model
+md("""## 4(e)
+""")
 
-**Design choices:**
+md("""**Design choices**
+
 1. **Data augmentation** (random horizontal flip + small rotation) — Fashion items have natural left/right variation; flips help shirts/bags generalize.
 2. **Slightly wider network + BatchNorm** — stabilizes training and increases capacity.
 3. **Lower learning rate with more epochs** — finer convergence after augmentation noise.
@@ -985,10 +957,7 @@ plt.show()
 # ============================================================
 # Q5
 # ============================================================
-md("""---
-# 5. Gutenberg Top Books Scraper
-
-Scrape Project Gutenberg's Top 100 list and extract the top 20 books.
+md("""# 5.
 """)
 
 code("""GUTENBERG_URL = 'https://www.gutenberg.org/browse/scores/top'
@@ -1075,10 +1044,7 @@ print(gutenberg_df.to_string(index=False))
 # ============================================================
 # Q6
 # ============================================================
-md("""---
-# 6. Books to Scrape
-
-Scrape the first 3 pages of http://books.toscrape.com and analyze prices & ratings.
+md("""# 6.
 """)
 
 code("""BASE_URL = 'http://books.toscrape.com'
@@ -1119,7 +1085,7 @@ print(f'\\nScraped {len(books_df)} books from 3 pages')
 display(books_df.head(10))
 """)
 
-md("""## 6(b) Distribution of Book Prices
+md("""## 6(b)
 """)
 
 code("""fig, axes = plt.subplots(1, 2, figsize=(13, 4))
@@ -1139,7 +1105,7 @@ plt.show()
 print(books_df['price'].describe())
 """)
 
-md("""## 6(c) Average Rating
+md("""## 6(c)
 """)
 
 code("""avg_rating = books_df['rating'].mean()
@@ -1147,7 +1113,7 @@ print(f'Average rating for scraped books: {avg_rating:.3f} / 5')
 print(f'(Based on {len(books_df)} books)')
 """)
 
-md("""## 6(d) Books per Rating Category
+md("""## 6(d)
 """)
 
 code("""rating_counts = books_df['rating'].value_counts().sort_index()
@@ -1170,7 +1136,7 @@ plt.savefig('figures/q6d_rating_counts.png', bbox_inches='tight')
 plt.show()
 """)
 
-md("""## 6(e) Relationship between Price and Rating
+md("""## 6(e)
 """)
 
 code("""fig, axes = plt.subplots(1, 2, figsize=(13, 4))
@@ -1200,7 +1166,15 @@ print(f'Pearson correlation (price, rating): {corr:.4f}')
 print(books_df.groupby('rating')['price'].agg(['count', 'mean', 'median', 'std']).round(2))
 """)
 
-md("""## 6(f) Summary Report — Key Findings
+md("""## 6(f)
+""")
+
+md("""**Key findings**
+
+1. Prices on the first three catalogue pages span a wide range with a roughly unimodal distribution centred near the mean price.
+2. Ratings are discrete (1–5); the modal category is reported in the numeric summary below.
+3. The Pearson correlation between price and rating is weak in magnitude, suggesting little linear relationship between how expensive a book is and its star rating on this practice site.
+4. All listed books on these pages report availability as "In stock".
 """)
 
 code("""print('=' * 70)
@@ -1213,25 +1187,13 @@ print(f'Mean / median price        : £{books_df[\"price\"].mean():.2f} / £{boo
 print(f'Average star rating        : {avg_rating:.3f} / 5')
 print(f'Most common rating         : {rating_counts.idxmax()} stars ({rating_counts.max()} books)')
 print(f'Price–rating correlation   : {corr:.4f}')
-print()
-print('Key findings:')
-print('1. Prices on the first three catalogue pages span a wide range with a roughly')
-print('   unimodal distribution centred near the mean price.')
-print('2. Ratings are discrete (1–5); the modal category is reported above.')
-print('3. The Pearson correlation between price and rating is weak in magnitude,')
-print('   suggesting little linear relationship between how expensive a book is and')
-print('   its star rating on this practice site.')
-print('4. All listed books on these pages report availability as \"In stock\".')
 print('=' * 70)
 """)
 
 # ============================================================
 # Q7
 # ============================================================
-md("""---
-# 7. ResNet Feature Map Visualization
-
-Extract and visualize the first 16 channels from `conv1`, `layer2`, and `layer4` of ResNet-18.
+md("""# 7.
 """)
 
 code("""class FeatureVisualizer:
@@ -1356,20 +1318,6 @@ def main():
 main()
 """)
 
-md("""---
-# Summary
-
-| Question | Topic | Key Results |
-|----------|-------|-------------|
-| 1 | K-Means + t-SNE | MiniBatchKMeans on Fashion MNIST; Elbow/CV vs true K=10; centroids |
-| 2 | PCA | 2D PCA embedding; comparison with t-SNE |
-| 3 | NB & KNN | Tuned α and n_neighbors; test accuracy + confusion matrices |
-| 4 | CNN | Baseline 3-layer CNN + improved model with augmentation/BatchNorm |
-| 5 | Gutenberg scrape | Top 20 books → `outputs/gutenberg_top20.csv` |
-| 6 | Books to Scrape | 3 pages analyzed; price/rating summary |
-| 7 | ResNet features | conv1 / layer2 / layer4 — first 16 channels visualized |
-""")
-
 nb.cells = cells
 nb.metadata = {
     'kernelspec': {
@@ -1383,7 +1331,7 @@ nb.metadata = {
     }
 }
 
-out_path = '/workspace/STAT7008A_Assignment3.ipynb'
+out_path = 'STAT7008A_Assignment3.ipynb'
 with open(out_path, 'w') as f:
     nbf.write(nb, f)
 print(f'Wrote {out_path} with {len(cells)} cells')
