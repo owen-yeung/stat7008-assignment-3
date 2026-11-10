@@ -1,0 +1,13 @@
+# Local data & caches
+data/
+__pycache__/
+.ipynb_checkpoints/
+logs/
+*.pyc
+
+# Large binary training artifacts (notebook regenerates these)
+outputs/*.pt
+outputs/*.npz
+
+# Duplicate executed copy
+STAT7008A_Assignment3_executed.ipynb
